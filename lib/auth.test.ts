@@ -1,0 +1,3 @@
+import { describe, expect, it } from "vitest";
+import { authenticate, createSession, hasPermission, verifySession } from "./auth";
+describe("auth and RBAC",()=>{ it("authenticates demo user",()=>{ const user=authenticate("demo","demo1234"); expect(user?.role).toBe("ADMIN"); }); it("rejects invalid password",()=>expect(authenticate("demo","wrong")).toBeNull()); it("signs and verifies httpOnly session token payload",()=>{ const token=createSession("user-demo"); expect(verifySession(token)?.username).toBe("demo"); }); it("enforces role permissions",()=>{ expect(hasPermission("VIEWER","transaction.execute")).toBe(false); expect(hasPermission("OPERATOR","transaction.execute")).toBe(true); }); });
