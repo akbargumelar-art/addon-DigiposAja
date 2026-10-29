@@ -1,6 +1,6 @@
-# Agrabudi Digipos Multi-Account Portal
+# addon-DigiposAja — Agrabudi Digipos Multi-Account Portal
 
-Portal web Next.js untuk multi-account Digipos. Implementasi fase ini **MOCK MODE only**; tidak ada koneksi browser ke Windows Server dan live transaction dinonaktifkan.
+Web UI Add-On DigiposAja berbasis Next.js untuk multi-account Digipos. Implementasi fase ini **MOCK MODE only**; tidak ada koneksi browser ke Windows Server dan live transaction dinonaktifkan.
 
 ## Jalankan
 
