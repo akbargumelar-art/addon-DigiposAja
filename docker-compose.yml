@@ -1,0 +1,17 @@
+services:
+  web:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      NODE_ENV: production
+      TRANSACTION_MODE: MOCK
+      ALLOW_LIVE_TRANSACTIONS: "false"
+      INTEGRATION_STATUS: NOT_CONFIGURED
+    ports:
+      - "127.0.0.1:3000:3000"
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
