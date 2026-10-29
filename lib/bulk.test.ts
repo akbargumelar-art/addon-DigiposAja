@@ -1,0 +1,3 @@
+import { describe, expect, it } from "vitest";
+import { createBatch, parseSerialFile, runBatch } from "./bulk";
+describe("bulk mock queue",()=>{it("normalizes serials and detects duplicates",()=>{const rows=parseSerialFile("serial\nabc\nABC\n");expect(rows[0].status).toBe("PENDING");expect(rows[1].status).toBe("DUPLICATE");expect(rows[0].normalizedSerial).toBe("ABC");});it("runs only valid items sequentially in mock mode",async()=>{const batch=createBatch("acc-demo","VF","serial\nabc\ndef");const result=await runBatch(batch.id);expect(result?.status).toBe("COMPLETED");expect(result?.items.map(item=>item.status)).toEqual(["SUCCESS","SUCCESS"]);expect(result?.items.every(item=>item.attempts===1)).toBe(true);});});

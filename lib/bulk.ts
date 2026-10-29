@@ -1,0 +1,14 @@
+import { randomUUID } from "node:crypto";
+import { z } from "zod";
+import { MockDigiposAdapter } from "./transactions";
+
+export const bulkRowSchema=z.object({serial:z.string().trim().min(3).max(128)});
+export type BulkItem={id:string;rowNumber:number;serial:string;normalizedSerial:string;status:"PENDING"|"PROCESSING"|"SUCCESS"|"FAILED"|"DUPLICATE"|"CANCELLED";attempts:number;response?:unknown;error?:string};
+export type Batch={id:string;accountId:string;transactionType:"VF"|"REDEEMVTSEL"|"REDEEMVBYU";status:"READY"|"RUNNING"|"COMPLETED"|"COMPLETED_WITH_ERRORS"|"CANCELLED";items:BulkItem[];createdAt:string};
+const batches=new Map<string,Batch>();
+export function parseSerialFile(text:string){ const rows=text.split(/\r?\n/).map(line=>line.trim()).filter(Boolean); const header=/^(serial|serial_number|vsat|barcode|kode_voucher)$/i.test(rows[0]||"") ? rows.shift() : undefined; void header; const seen=new Set<string>(); return rows.map((raw,index)=>{const serial=(raw.split(",")[0]||"").trim(); const normalized=serial.toUpperCase(); const duplicate=seen.has(normalized); seen.add(normalized); const parsed=bulkRowSchema.safeParse({serial}); return {rowNumber:index+1,serial,normalizedSerial:normalized,status:!parsed.success?"FAILED":duplicate?"DUPLICATE":"PENDING" as BulkItem["status"],error:!parsed.success?"Serial tidak valid":duplicate?"Duplicate dalam file":undefined};}); }
+export function createBatch(accountId:string,transactionType:Batch["transactionType"],text:string){ const parsed=parseSerialFile(text); const batch:Batch={id:`batch-${randomUUID()}`,accountId,transactionType,status:"READY",createdAt:new Date().toISOString(),items:parsed.map(row=>({...row,id:randomUUID(),attempts:0}))}; batches.set(batch.id,batch); return batch; }
+export function getBatch(id:string){return batches.get(id);}
+export function listBatches(){return [...batches.values()];}
+export async function runBatch(id:string){ const batch=batches.get(id); if(!batch||batch.status==="CANCELLED") return batch; batch.status="RUNNING"; const adapter=new MockDigiposAdapter(); for(const item of batch.items){ if(item.status!=="PENDING") continue; item.status="PROCESSING"; item.attempts++; try { item.response=await adapter.executeTransaction({transactionType:batch.transactionType,digiposAccountId:batch.accountId,target:item.normalizedSerial,idempotencyKey:randomUUID()}); item.status="SUCCESS"; } catch(error){item.status="FAILED";item.error=error instanceof Error?error.message:"Mock error";} } batch.status=batch.items.some(item=>item.status==="FAILED")?"COMPLETED_WITH_ERRORS":"COMPLETED"; return batch; }
+export function cancelBatch(id:string){const batch=batches.get(id); if(batch&&(batch.status==="READY"||batch.status==="RUNNING")){batch.status="CANCELLED";batch.items.forEach(item=>{if(item.status==="PENDING"||item.status==="PROCESSING")item.status="CANCELLED";});} return batch;}

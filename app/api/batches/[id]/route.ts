@@ -1,0 +1,5 @@
+import { NextResponse } from "next/server";
+import { getSession } from "@/lib/auth";
+import { cancelBatch, getBatch, runBatch } from "@/lib/bulk";
+export async function GET(_:Request,{params}:{params:{id:string}}){const session=await getSession();const batch=getBatch(params.id);if(!session)return NextResponse.json({error:"UNAUTHENTICATED"},{status:401});if(!batch||!session.accountIds.includes(batch.accountId))return NextResponse.json({error:"NOT_FOUND"},{status:404});return NextResponse.json({batch});}
+export async function POST(request:Request,{params}:{params:{id:string}}){const session=await getSession();if(!session)return NextResponse.json({error:"UNAUTHENTICATED"},{status:401});const batch=getBatch(params.id);if(!batch||!session.accountIds.includes(batch.accountId))return NextResponse.json({error:"NOT_FOUND"},{status:404});const action=(await request.json().catch(()=>({}))).action;if(action==="cancel")return NextResponse.json({batch:cancelBatch(params.id)});if(action==="start")return NextResponse.json({batch:await runBatch(params.id)});return NextResponse.json({error:"INVALID_ACTION"},{status:400});}
