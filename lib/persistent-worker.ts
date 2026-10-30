@@ -7,7 +7,7 @@ const backoff = (attempt: number) => Math.min(30_000, 250 * 2 ** Math.max(0, att
 export async function processPersistentBatch(id: string) {
   const batch = await findPersistentBatch(id); if (!batch || ["CANCELLED", "COMPLETED", "COMPLETED_WITH_ERRORS"].includes(batch.status)) return batch;
   const workerId = `${process.pid}-${randomUUID()}`; if (!(await claimPersistentBatch(id, workerId))) return findPersistentBatch(id);
-  const adapter = getSoBarcodeClient();
+  const adapter = await getSoBarcodeClient();
   for (const item of batch.items) {
     const current = await findPersistentBatch(id); if (!current || current.status !== "RUNNING") break;
     if (!["PENDING", "FAILED"].includes(item.status) || item.attempts >= maxAttempts()) continue;
