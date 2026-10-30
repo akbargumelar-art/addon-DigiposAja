@@ -1,9 +1,9 @@
 import { createHmac, randomUUID, scryptSync, timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
 
-export type Role = "ADMIN" | "OPERATOR" | "VIEWER";
+export type Role = "SUPER_ADMIN" | "ADMIN" | "OPERATOR" | "VIEWER";
 export type Permission = "account.read" | "transaction.read" | "transaction.execute" | "transaction.bulk_upload" | "transaction.retry" | "transaction.cancel" | "history.read" | "report.export" | "audit.read";
-const rolePermissions: Record<Role, Permission[]> = { ADMIN:["account.read","transaction.read","transaction.execute","transaction.bulk_upload","transaction.retry","transaction.cancel","history.read","report.export","audit.read"], OPERATOR:["account.read","transaction.read","transaction.execute","transaction.bulk_upload","transaction.retry","transaction.cancel","history.read","report.export"], VIEWER:["account.read","transaction.read","history.read"] };
+const rolePermissions: Record<Role, Permission[]> = { SUPER_ADMIN:["account.read","transaction.read","transaction.execute","transaction.bulk_upload","transaction.retry","transaction.cancel","history.read","report.export","audit.read"], ADMIN:["account.read","transaction.read","transaction.execute","transaction.bulk_upload","transaction.retry","transaction.cancel","history.read","report.export","audit.read"], OPERATOR:["account.read","transaction.read","transaction.execute","transaction.bulk_upload","transaction.retry","transaction.cancel","history.read","report.export"], VIEWER:["account.read","transaction.read","history.read"] };
 const demoUsers = [{ id:"user-demo", username:"demo", passwordHash:scryptSync("demo1234","agrabudi-demo",32).toString("hex"), role:"ADMIN" as const, accountIds:["acc-demo"] }];
 const secret = () => process.env.AUTH_SECRET || "local-development-secret";
 export function hashSession(sessionId:string){ return createHmac("sha256",secret()).update(sessionId).digest("hex"); }
