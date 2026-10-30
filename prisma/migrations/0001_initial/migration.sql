@@ -1,0 +1,2 @@
+-- Initial schema is generated from prisma/schema.prisma.
+-- Run `pnpm prisma migrate dev --name initial` against a local PostgreSQL instance.
