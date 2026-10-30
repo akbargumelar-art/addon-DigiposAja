@@ -1,7 +1,98 @@
-generator client { provider = "prisma-client-js" }
-datasource db { provider = "postgresql" url = env("DATABASE_URL") }
-model User { id String @id @default(cuid()) username String @unique createdAt DateTime @default(now()) accounts UserAccountAccess[] transactions Transaction[] }
-model DigiposAccount { id String @id @default(cuid()) username String userCode String outletId String phoneMasked String status String validUntil DateTime? createdAt DateTime @default(now()) updatedAt DateTime @updatedAt access UserAccountAccess[] transactions Transaction[] }
-model UserAccountAccess { userId String accountId String user User @relation(fields:[userId],references:[id]) account DigiposAccount @relation(fields:[accountId],references:[id]) @@id([userId,accountId]) }
-model Transaction { id String @id @default(cuid()) digiposAccountId String createdById String transactionType String mode String status String idempotencyKey String @unique requestId String sanitizedInput Json normalizedResponse Json? errorCode String? errorMessage String? createdAt DateTime @default(now()) account DigiposAccount @relation(fields:[digiposAccountId],references:[id]) user User @relation(fields:[createdById],references:[id]) }
-model AuditLog { id String @id @default(cuid()) actorId String? action String resource String? metadata Json? createdAt DateTime @default(now()) }
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String              @id @default(cuid())
+  username     String              @unique
+  createdAt    DateTime            @default(now())
+  accounts     UserAccountAccess[]
+  transactions Transaction[]
+  batches      Batch[]
+}
+
+model DigiposAccount {
+  id           String              @id @default(cuid())
+  username     String
+  userCode     String
+  outletId     String
+  phoneMasked  String
+  status       String
+  validUntil   DateTime?
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+  access       UserAccountAccess[]
+  transactions Transaction[]
+  batches      Batch[]
+}
+
+model UserAccountAccess {
+  userId  String
+  accountId String
+  user    User           @relation(fields: [userId], references: [id])
+  account DigiposAccount @relation(fields: [accountId], references: [id])
+  @@id([userId, accountId])
+}
+
+model Transaction {
+  id                 String          @id @default(cuid())
+  digiposAccountId   String
+  createdById        String
+  transactionType    String
+  mode               String
+  status             String
+  idempotencyKey     String          @unique
+  requestId          String
+  sanitizedInput     Json
+  normalizedResponse Json?
+  errorCode          String?
+  errorMessage       String?
+  createdAt          DateTime        @default(now())
+  account            DigiposAccount  @relation(fields: [digiposAccountId], references: [id])
+  user               User            @relation(fields: [createdById], references: [id])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  actorId   String?
+  action    String
+  resource  String?
+  metadata  Json?
+  createdAt DateTime @default(now())
+}
+
+model Batch {
+  id               String         @id @default(cuid())
+  accountId        String
+  transactionType  String
+  status           String
+  mode             String
+  createdById      String
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  account          DigiposAccount @relation(fields: [accountId], references: [id])
+  user             User           @relation(fields: [createdById], references: [id])
+  items            BatchItem[]
+}
+
+model BatchItem {
+  id               String   @id @default(cuid())
+  batchId          String
+  rowNumber        Int
+  serial           String
+  normalizedSerial String
+  status           String
+  attempts         Int      @default(0)
+  response         Json?
+  errorCode        String?
+  errorMessage     String?
+  startedAt        DateTime?
+  finishedAt       DateTime?
+  batch            Batch    @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  @@index([batchId, status])
+}
