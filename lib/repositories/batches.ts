@@ -18,7 +18,7 @@ export async function updatePersistentBatch(id: string, data: { status?: string;
   if (!isDatabaseConfigured) return null;
   return getDb().batch.update({ where: { id }, data });
 }
-export async function updatePersistentItem(id: string, data: { status?: string; attempts?: number; response?: unknown; errorCode?: string | null; errorMessage?: string | null; startedAt?: Date | null; finishedAt?: Date | null }) {
+export async function updatePersistentItem(id: string, data: { status?: string; attempts?: number; response?: unknown; errorCode?: string | null; errorMessage?: string | null; responseCode?: string | null; responseMessage?: string | null; providerReference?: string | null; requestId?: string | null; idempotencyKey?: string | null; startedAt?: Date | null; finishedAt?: Date | null }) {
   if (!isDatabaseConfigured) return null;
   const jsonData = data.response === undefined ? data : { ...data, response: data.response as Prisma.InputJsonValue };
   return getDb().batchItem.update({ where: { id }, data: jsonData as Prisma.BatchItemUpdateInput });

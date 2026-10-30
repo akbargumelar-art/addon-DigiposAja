@@ -114,6 +114,11 @@ model BatchItem {
   response         Json?
   errorCode        String?
   errorMessage     String?
+  responseCode     String?
+  responseMessage  String?
+  providerReference String?
+  requestId        String?
+  idempotencyKey   String?
   startedAt        DateTime?
   finishedAt       DateTime?
   batch            Batch    @relation(fields: [batchId], references: [id], onDelete: Cascade)
