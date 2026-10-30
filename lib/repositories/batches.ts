@@ -33,3 +33,9 @@ export async function resetPersistentFailedItems(batchId: string, maxAttempts: n
   return getDb().batchItem.updateMany({ where: { batchId, status: "FAILED", attempts: { lt: maxAttempts } }, data: { status: "PENDING", errorCode: null, errorMessage: null } });
 }
 export async function setPersistentBatchStatus(id: string, status: string) { return updatePersistentBatch(id, { status }); }
+export async function claimPersistentBatch(id: string, workerId: string) {
+  if (!isDatabaseConfigured) return false;
+  const result = await getDb().batch.updateMany({ where: { id, status: { in: ["READY", "RUNNING"] }, OR: [{ claimedAt: null }, { claimedAt: { lt: new Date(Date.now() - 60_000) } }] }, data: { status: "RUNNING", claimedAt: new Date(), claimedBy: workerId } });
+  return result.count === 1;
+}
+export async function releasePersistentBatch(id: string, workerId: string) { if (!isDatabaseConfigured) return; await getDb().batch.updateMany({ where: { id, claimedBy: workerId }, data: { claimedAt: null, claimedBy: null } }); }

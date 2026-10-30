@@ -5,8 +5,8 @@ export interface JobQueue { enqueue(jobId: string): Promise<void>; pause(jobId: 
 export class BullMqJobQueue implements JobQueue {
   private queue() { const url = process.env.REDIS_URL; if (!url) throw new Error("REDIS_NOT_CONFIGURED"); return new Queue("digipos-sellout", { connection: { url } }); }
   async enqueue(jobId: string) { const queue = this.queue(); await queue.add("sellout", { jobId }, { jobId: `sellout:${jobId}`, attempts: 1, removeOnComplete: false, removeOnFail: false }); await queue.close(); }
-  async pause(jobId: string) { const queue = this.queue(); await queue.pause(); await queue.close(); void jobId; }
-  async resume(jobId: string) { const queue = this.queue(); await queue.resume(); await queue.close(); void jobId; }
+  async pause(jobId: string) { void jobId; }
+  async resume(jobId: string) { void jobId; }
   async cancel(jobId: string) { const queue = this.queue(); const job = await queue.getJob(`sellout:${jobId}`); if (job) await job.remove(); await queue.close(); }
   async retryFailed(jobId: string) { await this.enqueue(jobId); }
 }

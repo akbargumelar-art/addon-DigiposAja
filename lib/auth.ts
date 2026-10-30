@@ -1,12 +1,13 @@
 import { createHmac, randomUUID, scryptSync, timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
+import { findPersistentSession } from "@/lib/repositories/auth";
 
 export type Role = "SUPER_ADMIN" | "ADMIN" | "OPERATOR" | "VIEWER";
 export type Permission = "account.read" | "account.manage" | "transaction.read" | "transaction.inquiry" | "transaction.execute" | "transaction.bulk_upload" | "transaction.retry" | "transaction.cancel" | "history.read" | "report.export" | "audit.read" | "settings.manage";
 const rolePermissions: Record<Role, Permission[]> = { SUPER_ADMIN:["account.read","account.manage","transaction.read","transaction.inquiry","settings.manage","transaction.execute","transaction.bulk_upload","transaction.retry","transaction.cancel","history.read","report.export","audit.read"], ADMIN:["account.read","account.manage","transaction.read","transaction.inquiry","settings.manage","transaction.execute","transaction.bulk_upload","transaction.retry","transaction.cancel","history.read","report.export","audit.read"], OPERATOR:["account.read","transaction.read","transaction.inquiry","transaction.execute","transaction.bulk_upload","transaction.retry","transaction.cancel","history.read","report.export"], VIEWER:["account.read","transaction.read","history.read"] };
 // Mock-only auth boundary: database-backed users require a separate auth migration and are deliberately not enabled.
 export const AUTH_MODE = process.env.DATABASE_URL ? "MOCK_DATABASE_SCOPE_PENDING" : "MOCK_DEVELOPMENT";
-const demoUsers = [{ id:"user-demo", username:"demo", passwordHash:scryptSync("demo1234","agrabudi-demo",32).toString("hex"), role:"ADMIN" as const, accountIds:["acc-demo"] }];
+const demoUsers = process.env.NODE_ENV === "production" || process.env.DATABASE_URL ? [] : [{ id:"user-demo", username:"demo", passwordHash:scryptSync("demo1234","agrabudi-demo",32).toString("hex"), role:"ADMIN" as const, accountIds:["acc-demo"] }];
 const secret = () => process.env.AUTH_SECRET || "local-development-secret";
 export function hashSession(sessionId:string){ return createHmac("sha256",secret()).update(sessionId).digest("hex"); }
 const SESSION_TTL_SECONDS=60*60*8;
@@ -14,5 +15,5 @@ export function createSession(userId:string){ const sessionId=`${userId}.${Date.
 export function verifySession(token:string){ const parts=token.split("."); if(parts.length!==4||parts[3].length!==64) return null; const sessionId=parts.slice(0,3).join("."); const issuedAt=Number(parts[1]); if(!Number.isFinite(issuedAt)||Date.now()-issuedAt>SESSION_TTL_SECONDS*1000||Date.now()<issuedAt) return null; const expected=hashSession(sessionId); const supplied=Buffer.from(parts[3]); const expectedBuffer=Buffer.from(expected); if(supplied.length!==expectedBuffer.length||!timingSafeEqual(supplied,expectedBuffer)) return null; const user=demoUsers.find(item=>item.id===parts[0]); return user ? {id:user.id,username:user.username,role:user.role,accountIds:user.accountIds} : null; }
 export function authenticate(username:string,password:string){ const user=demoUsers.find(item=>item.username===username); if(!user) return null; const hash=scryptSync(password,"agrabudi-demo",32).toString("hex"); return hash===user.passwordHash ? {id:user.id,username:user.username,role:user.role,accountIds:user.accountIds} : null; }
 export function hasPermission(role:Role, permission:Permission){ return rolePermissions[role].includes(permission); }
-export async function getSession(){ const token=(await cookies()).get("agrabudi_session")?.value; return token ? verifySession(token) : null; }
+export async function getSession(){ const token=(await cookies()).get("agrabudi_session")?.value; if(!token)return null; return process.env.DATABASE_URL ? findPersistentSession(token) : verifySession(token); }
 export function assertAccountAccess(session:{accountIds:string[]},accountId:string){ if(!session.accountIds.includes(accountId)) throw new Error("ACCOUNT_ACCESS_DENIED"); }

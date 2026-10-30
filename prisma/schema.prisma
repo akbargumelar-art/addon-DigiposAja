@@ -10,9 +10,13 @@ datasource db {
 model User {
   id           String              @id @default(cuid())
   username     String              @unique
+  passwordHash String              @default("")
+  role         String              @default("ADMIN")
   createdAt    DateTime            @default(now())
   accounts     UserAccountAccess[]
   transactions Transaction[]
+  sessions     Session[]
+
   batches      Batch[]
 }
 
@@ -75,9 +79,28 @@ model Batch {
   createdById      String
   createdAt        DateTime       @default(now())
   updatedAt        DateTime       @updatedAt
+  claimedAt        DateTime?
+  claimedBy        String?
   account          DigiposAccount @relation(fields: [accountId], references: [id])
   user             User           @relation(fields: [createdById], references: [id])
   items            BatchItem[]
+}
+
+model Session {
+  id        String   @id
+  userId    String
+  expiresAt DateTime
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([expiresAt])
+}
+
+model IdempotencyRecord {
+  key       String   @id
+  userId    String
+  response  Json
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+  @@index([expiresAt])
 }
 
 model BatchItem {
