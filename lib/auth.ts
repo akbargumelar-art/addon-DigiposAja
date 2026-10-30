@@ -4,6 +4,8 @@ import { cookies } from "next/headers";
 export type Role = "SUPER_ADMIN" | "ADMIN" | "OPERATOR" | "VIEWER";
 export type Permission = "account.read" | "account.manage" | "transaction.read" | "transaction.inquiry" | "transaction.execute" | "transaction.bulk_upload" | "transaction.retry" | "transaction.cancel" | "history.read" | "report.export" | "audit.read" | "settings.manage";
 const rolePermissions: Record<Role, Permission[]> = { SUPER_ADMIN:["account.read","account.manage","transaction.read","transaction.inquiry","settings.manage","transaction.execute","transaction.bulk_upload","transaction.retry","transaction.cancel","history.read","report.export","audit.read"], ADMIN:["account.read","account.manage","transaction.read","transaction.inquiry","settings.manage","transaction.execute","transaction.bulk_upload","transaction.retry","transaction.cancel","history.read","report.export","audit.read"], OPERATOR:["account.read","transaction.read","transaction.inquiry","transaction.execute","transaction.bulk_upload","transaction.retry","transaction.cancel","history.read","report.export"], VIEWER:["account.read","transaction.read","history.read"] };
+// Mock-only auth boundary: database-backed users require a separate auth migration and are deliberately not enabled.
+export const AUTH_MODE = process.env.DATABASE_URL ? "MOCK_DATABASE_SCOPE_PENDING" : "MOCK_DEVELOPMENT";
 const demoUsers = [{ id:"user-demo", username:"demo", passwordHash:scryptSync("demo1234","agrabudi-demo",32).toString("hex"), role:"ADMIN" as const, accountIds:["acc-demo"] }];
 const secret = () => process.env.AUTH_SECRET || "local-development-secret";
 export function hashSession(sessionId:string){ return createHmac("sha256",secret()).update(sessionId).digest("hex"); }

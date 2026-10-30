@@ -1,0 +1,1 @@
+import Link from "next/link"; export default function Tool({params}:{params:{type:string}}){return <main className="content"><h1 className="title">Inquiry {params.type.toUpperCase()}</h1><div className="card"><p>Mock inquiry boundary. Windows Agent is NOT_CONFIGURED.</p><Link href="/transactions">Kembali</Link></div></main>}

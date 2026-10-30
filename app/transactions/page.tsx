@@ -1,0 +1,2 @@
+import Link from "next/link"; import { transactionRegistry } from "@/lib/transactions";
+export default function Transactions(){return <main className="content"><h1 className="title">Transactions</h1><div className="card">{Object.entries(transactionRegistry).map(([type,item])=><Link key={type} href={`/transactions/${type.toLowerCase()}`} style={{display:"block",padding:8}}>{item.label}</Link>)}</div></main>}

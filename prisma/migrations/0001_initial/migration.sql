@@ -1,2 +1,17 @@
--- Initial schema is generated from prisma/schema.prisma.
--- Run `pnpm prisma migrate dev --name initial` against a local PostgreSQL instance.
+CREATE TABLE "User" ("id" TEXT NOT NULL, "username" TEXT NOT NULL, "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP, CONSTRAINT "User_pkey" PRIMARY KEY ("id"));
+CREATE UNIQUE INDEX "User_username_key" ON "User"("username");
+CREATE TABLE "DigiposAccount" ("id" TEXT NOT NULL, "username" TEXT NOT NULL, "userCode" TEXT NOT NULL, "outletId" TEXT NOT NULL, "phoneMasked" TEXT NOT NULL, "status" TEXT NOT NULL, "validUntil" TIMESTAMP(3), "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP, "updatedAt" TIMESTAMP(3) NOT NULL, CONSTRAINT "DigiposAccount_pkey" PRIMARY KEY ("id"));
+CREATE TABLE "UserAccountAccess" ("userId" TEXT NOT NULL, "accountId" TEXT NOT NULL, CONSTRAINT "UserAccountAccess_pkey" PRIMARY KEY ("userId", "accountId"));
+CREATE TABLE "Transaction" ("id" TEXT NOT NULL, "digiposAccountId" TEXT NOT NULL, "createdById" TEXT NOT NULL, "transactionType" TEXT NOT NULL, "mode" TEXT NOT NULL, "status" TEXT NOT NULL, "idempotencyKey" TEXT NOT NULL, "requestId" TEXT NOT NULL, "sanitizedInput" JSONB NOT NULL, "normalizedResponse" JSONB, "errorCode" TEXT, "errorMessage" TEXT, "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP, CONSTRAINT "Transaction_pkey" PRIMARY KEY ("id"));
+CREATE UNIQUE INDEX "Transaction_idempotencyKey_key" ON "Transaction"("idempotencyKey");
+CREATE TABLE "AuditLog" ("id" TEXT NOT NULL, "actorId" TEXT, "action" TEXT NOT NULL, "resource" TEXT, "metadata" JSONB, "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP, CONSTRAINT "AuditLog_pkey" PRIMARY KEY ("id"));
+CREATE TABLE "Batch" ("id" TEXT NOT NULL, "accountId" TEXT NOT NULL, "transactionType" TEXT NOT NULL, "status" TEXT NOT NULL, "mode" TEXT NOT NULL, "createdById" TEXT NOT NULL, "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP, "updatedAt" TIMESTAMP(3) NOT NULL, CONSTRAINT "Batch_pkey" PRIMARY KEY ("id"));
+CREATE TABLE "BatchItem" ("id" TEXT NOT NULL, "batchId" TEXT NOT NULL, "rowNumber" INTEGER NOT NULL, "serial" TEXT NOT NULL, "normalizedSerial" TEXT NOT NULL, "status" TEXT NOT NULL, "attempts" INTEGER NOT NULL DEFAULT 0, "response" JSONB, "errorCode" TEXT, "errorMessage" TEXT, "startedAt" TIMESTAMP(3), "finishedAt" TIMESTAMP(3), CONSTRAINT "BatchItem_pkey" PRIMARY KEY ("id"));
+CREATE INDEX "BatchItem_batchId_status_idx" ON "BatchItem"("batchId", "status");
+ALTER TABLE "UserAccountAccess" ADD CONSTRAINT "UserAccountAccess_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "UserAccountAccess" ADD CONSTRAINT "UserAccountAccess_accountId_fkey" FOREIGN KEY ("accountId") REFERENCES "DigiposAccount"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Transaction" ADD CONSTRAINT "Transaction_digiposAccountId_fkey" FOREIGN KEY ("digiposAccountId") REFERENCES "DigiposAccount"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Transaction" ADD CONSTRAINT "Transaction_createdById_fkey" FOREIGN KEY ("createdById") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Batch" ADD CONSTRAINT "Batch_accountId_fkey" FOREIGN KEY ("accountId") REFERENCES "DigiposAccount"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Batch" ADD CONSTRAINT "Batch_createdById_fkey" FOREIGN KEY ("createdById") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "BatchItem" ADD CONSTRAINT "BatchItem_batchId_fkey" FOREIGN KEY ("batchId") REFERENCES "Batch"("id") ON DELETE CASCADE ON UPDATE CASCADE;

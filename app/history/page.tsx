@@ -1,0 +1,1 @@
+"use client"; import { useEffect,useState } from "react"; export default function History(){const [rows,setRows]=useState<unknown[]>([]);useEffect(()=>{fetch('/api/history').then(r=>r.json()).then(b=>setRows(b.history||[]));},[]);return <main className="content"><h1 className="title">History</h1><div className="card"><pre>{JSON.stringify(rows,null,2)}</pre></div></main>}

@@ -1,0 +1,1 @@
+export default function Settings(){return <main className="content"><h1 className="title">Settings</h1><div className="card"><p>Transaction mode: MOCK</p><p>Live transaction: DISABLED</p><p>Windows Agent: NOT_CONFIGURED</p><p>Auth: MOCK_DEVELOPMENT / MOCK_DATABASE_SCOPE_PENDING</p></div></main>}

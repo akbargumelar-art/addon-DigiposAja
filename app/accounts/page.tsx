@@ -1,0 +1,2 @@
+import Link from "next/link"; import { listAccounts } from "@/lib/accounts";
+export default function Accounts(){return <main className="content"><h1 className="title">Accounts</h1><div className="card"><table className="table"><thead><tr><th>Username</th><th>Outlet</th><th>Status</th></tr></thead><tbody>{listAccounts().map(a=><tr key={a.id}><td>{a.username}</td><td>{a.outletId}</td><td>{a.status}</td></tr>)}</tbody></table><Link href="/">Kembali</Link></div></main>}

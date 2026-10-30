@@ -1,0 +1,1 @@
+import Link from "next/link"; export default function TransactionType({params}:{params:{type:string}}){return <main className="content"><h1 className="title">Transaction {params.type.toUpperCase()}</h1><div className="card"><p>Mock transaction boundary. Live execution is disabled.</p><Link href="/transactions">Kembali</Link></div></main>}

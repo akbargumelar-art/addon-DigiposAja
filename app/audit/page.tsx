@@ -1,0 +1,1 @@
+"use client"; import { useEffect,useState } from "react"; export default function Audit(){const [events,setEvents]=useState<unknown[]>([]);useEffect(()=>{fetch('/api/audit').then(r=>r.json()).then(b=>setEvents(b.events||[]));},[]);return <main className="content"><h1 className="title">Audit</h1><div className="card"><pre>{JSON.stringify(events,null,2)}</pre></div></main>}
