@@ -1,0 +1,5 @@
+import { createCipheriv, createDecipheriv, createHash, randomBytes } from "node:crypto";
+const key = () => createHash("sha256").update(process.env.CONFIG_ENCRYPTION_KEY || process.env.AUTH_SECRET || "local-development-secret").digest();
+export function encryptSecret(value: string) { const iv = randomBytes(12); const cipher = createCipheriv("aes-256-gcm", key(), iv); const ciphertext = Buffer.concat([cipher.update(value, "utf8"), cipher.final()]); return `${iv.toString("base64url")}.${cipher.getAuthTag().toString("base64url")}.${ciphertext.toString("base64url")}`; }
+export function decryptSecret(value: string) { const [iv, tag, ciphertext] = value.split("."); const decipher = createDecipheriv("aes-256-gcm", key(), Buffer.from(iv, "base64url")); decipher.setAuthTag(Buffer.from(tag, "base64url")); return Buffer.concat([decipher.update(Buffer.from(ciphertext, "base64url")), decipher.final()]).toString("utf8"); }
+export function maskSecret(value?: string | null) { if (!value) return ""; return `${"*".repeat(Math.max(0, Math.min(12, value.length - 4)))}${value.slice(-4)}`; }

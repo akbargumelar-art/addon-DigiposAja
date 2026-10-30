@@ -103,6 +103,46 @@ model IdempotencyRecord {
   @@index([expiresAt])
 }
 
+model IntegrationConfig {
+  id            String   @id
+  requestedMode String   @default("MOCK")
+  approvedMode  String   @default("MOCK")
+  baseUrl       String   @default("")
+  apiPath       String   @default("/api/bulk-sellout")
+  timeoutMs     Int      @default(30000)
+  maxRetries    Int      @default(2)
+  concurrency   Int      @default(1)
+  version       Int      @default(1)
+  updatedById   String?
+  updatedAt     DateTime @updatedAt
+  createdAt     DateTime @default(now())
+  secret        IntegrationSecret?
+  audits        ConfigAuditLog[]
+}
+
+model IntegrationSecret {
+  id        String   @id
+  configId  String   @unique
+  ciphertext String
+  updatedById String?
+  updatedAt DateTime @updatedAt
+  config    IntegrationConfig @relation(fields: [configId], references: [id], onDelete: Cascade)
+}
+
+model ConfigAuditLog {
+  id          String   @id @default(cuid())
+  configId    String
+  actorId     String?
+  action      String
+  changedFields Json
+  ipAddress   String?
+  requestId   String
+  reason      String?
+  createdAt   DateTime @default(now())
+  config      IntegrationConfig @relation(fields: [configId], references: [id], onDelete: Cascade)
+  @@index([configId, createdAt])
+}
+
 model BatchItem {
   id               String   @id @default(cuid())
   batchId          String
